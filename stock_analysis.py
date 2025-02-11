@@ -136,14 +136,17 @@ if __name__ == "__main__":
     # if arguments are provided, use them
     if file_arguments:
 
-        # open file while in use (handles auto closing)
-        with open('stocks.json', 'w') as stocks_file:
+        try:
+            # open file while in use (handles auto closing)
+            with open('stocks.json', 'w') as stocks_file:
 
-            # create list of results
-            collected_data = [get_processed_data(ticker) for ticker in file_arguments]
+                # create list of results
+                collected_data = [get_processed_data(ticker) for ticker in file_arguments]
 
-            # print to file
-            print(dumps(collected_data), file=stocks_file)
+                # print to file
+                print(dumps(collected_data), file=stocks_file)
+        except IOError as e:
+            print(f"Failure to write to file: {e}")
 
     else: # if arguments are not provided, do old test
         ticker = "LMT"
