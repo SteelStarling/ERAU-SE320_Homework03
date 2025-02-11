@@ -8,7 +8,7 @@ Assignment: Assignment 03 - API Requests
 from datetime import date
 from requests import get
 
-def download_data(ticker: str) -> dict:
+def download_data(ticker: str) -> dict | None:
     """Downloads historic data about the specified stock price
     
     Argument:
@@ -16,6 +16,7 @@ def download_data(ticker: str) -> dict:
 
     Returns:
         Dictionary of json output summarizing stock data for the given ticker
+        None in the case the request fails
     """
     YEAR_PERIOD = 5
 
@@ -31,10 +32,31 @@ def download_data(ticker: str) -> dict:
     path = f"/api/quote/{ticker}/historical?assetclass=stocks&fromdate={start}&limit=9999"
     full_url = base_url + path
 
-    # use a header so it works (otherwise it throws an error)
-    response = get(full_url, headers={"User-Agent": "Mozilla/5.0"}).json()
+    # catch errors
+    output = None
+    try:
+        # use a header so it works (otherwise it throws an error)
+        response = get(full_url, headers={"User-Agent": "Mozilla/5.0"})
 
-    return response
+        # create exception if the response failed
+        response.raise_for_status()
+
+        # convert to json
+        output = response.json()
+    except Exception as e:
+        # if it breaks, print error and return None instead
+        print(e)
+
+    # ensure rCode response is valid
+    if output['status']['rCode'] != 200:
+        # if invalid, print error
+        error_code = output['status']['bCodeMessage'][0]['code']
+        error_message = output['status']['bCodeMessage'][0]['errorMessage']
+
+        print(f"The request failed with code {error_code}: {error_message}")
+        output = None
+    
+    return output
 
 def process_data(dataset: dict) -> dict:
     """Calculates and returns statistics for closing prices from the dataset
@@ -44,8 +66,13 @@ def process_data(dataset: dict) -> dict:
     
     Returns:
         Dict containing min, max, average, and median of the closing prices in the provided dataset
+        None if the dataset is provided as None
     """
 
+    # ensure None is handled
+    if dataset is None:
+        return None
+    
     # create list of closing prices for each day in dataset
     closing_data = [float(day['close'][1:]) for day in dataset['data']['tradesTable']['rows']]
 
