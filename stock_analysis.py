@@ -6,7 +6,9 @@ Assignment: Assignment 03 - API Requests
 """
 
 from datetime import date
+from json import dumps
 from requests import get
+from sys import argv
 
 def download_data(ticker: str) -> dict | None:
     """Downloads historic data about the specified stock price
@@ -84,7 +86,7 @@ def process_data(dataset: dict) -> dict:
 
     # turn into dict and return
     return {"max": max_closing, "min": min_closing, "avg": avg_closing, "median": med_closing}     
-        
+
 def median(input: list[float]) -> float:
     """Calculates the median value of a list
     
@@ -111,9 +113,40 @@ def median(input: list[float]) -> float:
     # if there is not a middle value, return the average of the two middle values
     return (input[mid_index] + input[mid_index + 1]) / 2
 
+def get_processed_data(ticker: str) -> dict | None:
+    """Calculates and returns statistics for closing prices from the specified stock price
+    
+    Argument:
+        ticker (string): the ticker code to search for
+    
+    Returns:
+        Dict containing min, max, average, and median of the closing prices in the provided ticker
+        None if the ticker or connection is invalid
+    """
+
+    dataset = download_data(ticker)
+    closing_data = process_data(dataset)
+
+    return closing_data
+
 
 if __name__ == "__main__":
-    ticker = "LMT"
-    data = download_data(ticker)
-    closing_stats = process_data(data)
-    print(closing_stats)
+    file_arguments = argv[1:]
+
+    # if arguments are provided, use them
+    if file_arguments:
+
+        # open file while in use (handles auto closing)
+        with open('stocks.json', 'w') as stocks_file:
+
+            # create list of results
+            collected_data = [get_processed_data(ticker) for ticker in file_arguments]
+
+            # print to file
+            print(dumps(collected_data), file=stocks_file)
+
+    else: # if arguments are not provided, do old test
+        ticker = "LMT"
+        data = download_data(ticker)
+        closing_stats = process_data(data)
+        print(closing_stats)

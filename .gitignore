@@ -1,3 +1,6 @@
+# Project specific info
+stocks.json
+
 # Ignore vscode specific info
 .vscode/
 
