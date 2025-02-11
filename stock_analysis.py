@@ -5,7 +5,8 @@ Class:  SE320 - Software Construction
 Assignment: Assignment 03 - API Requests
 """
 
-import requests
+from datetime import date
+from requests import get
 
 def download_data(ticker: str) -> dict:
     """Downloads historic data about the specified stock price
@@ -18,8 +19,25 @@ def download_data(ticker: str) -> dict:
     """
     YEAR_PERIOD = 5
 
+    # capitalize (all ticker names capitalized)
     ticker = ticker.upper()
+
+    # calc start date
     today = date.today()
-    start = str(today.replace(year=today.year - 5))
+    start = str(today.replace(year=today.year - YEAR_PERIOD))
+
+    # url handling
     base_url = "https://api.nasdaq.com"
     path = f"/api/quote/{ticker}/historical?assetclass=stocks&fromdate={start}&limit=9999"
+    full_url = base_url + path
+
+    # use a header so it works (otherwise it throws an error)
+    response = get(full_url, headers={"User-Agent": "Mozilla/5.0"}).json()
+
+    return response
+
+if __name__ == "__main__":
+    ticker = "LMT"
+    d = download_data(ticker)
+    for row in d['data']['tradesTable']['rows']:
+        print(f"On {row['date']}, {ticker} opened at {row['open']}")
